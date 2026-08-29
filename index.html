@@ -3,1011 +3,917 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>이상기체 법칙 가상 실험실</title>
-    <!-- Tailwind CSS (정상 동작 Play CDN) -->
+    <title>금속의 산화 정도 비교 가상 실험실</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome 아이콘 라이브러리 -->
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
         body {
-            font-family: 'Noto Sans KR', 'Inter', sans-serif;
-            background-color: #0f172a;
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f1f5f9;
         }
-        /* 스크롤바 커스텀 */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+
+        /* Fluid glass effect */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
         }
-        ::-webkit-scrollbar-track {
-            background: #1e293b;
+
+        /* 6 Well Plate Styles */
+        .well {
+            background: radial-gradient(circle at 50% 50%, #ffffff 0%, #e2e8f0 70%, #cbd5e1 100%);
+            box-shadow: inset 0 6px 10px rgba(0,0,0,0.25), inset 0 -4px 6px rgba(255,255,255,0.8), 0 4px 6px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #475569;
-            border-radius: 4px;
+
+        .well.drag-over {
+            border-color: #3b82f6;
+            box-shadow: inset 0 0 15px rgba(59, 130, 246, 0.5), 0 0 10px rgba(59, 130, 246, 0.5);
+            transform: scale(1.02);
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
+
+        /* Liquid surface layer */
+        .liquid-layer {
+            transition: background-color 0.5s linear;
+            box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.6), inset 0 -2px 4px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Draggable items */
+        .draggable-item {
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .draggable-item:active {
+            cursor: grabbing;
+            transform: scale(1.05);
+        }
+
+        /* Reaction Animation */
+        @keyframes pulse-reacting {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        .reacting-metal-box {
+            animation: pulse-reacting 3s infinite ease-in-out;
+        }
+
+        /* Silver Crystal Growth Effect */
+        @keyframes silver-sparkle {
+            0%, 100% { filter: drop-shadow(0 0 2px #ffffff) brightness(1); }
+            50% { filter: drop-shadow(0 0 5px #cbd5e1) brightness(1.25); }
+        }
+
+        .silver-crystal {
+            position: absolute;
+            background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 40%, #94a3b8 100%);
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            transition: transform 0.8s ease-out, opacity 0.8s ease-out;
+            animation: silver-sparkle 2s infinite ease-in-out;
+            box-shadow: 0 0 4px rgba(255, 255, 255, 0.9);
+            z-index: 20;
+        }
+
+        /* Copper Coating Effect */
+        .copper-coating {
+            transition: opacity 0.8s ease-out;
+        }
+
+        /* Bubbles animation for reaction */
+        @keyframes bubble-rise {
+            0% { transform: translateY(0) scale(0.5); opacity: 0; }
+            50% { opacity: 0.8; }
+            100% { transform: translateY(-22px) scale(1.2); opacity: 0; }
+        }
+        .bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            animation: bubble-rise 1.5s infinite ease-in;
         }
     </style>
 </head>
-<body class="text-slate-100 min-h-screen flex flex-col overflow-x-hidden">
+<body class="min-h-screen text-slate-800 flex flex-col justify-between">
 
-    <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 z-10 shadow-lg">
-        <div class="flex items-center gap-3">
-            <div class="bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/30 text-emerald-400">
-                <i class="fa-solid fa-flask-vial text-xl animate-pulse"></i>
-            </div>
-            <div>
-                <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-                    이상기체 가상 실험실 <span class="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">2022 개정교육과정</span>
-                </h1>
-                <p class="text-xs text-slate-400">물질과 에너지 - 기체의 상태 변화와 규칙성 탐구</p>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-3">
-            <!-- 사용자 학번 확인 배지 -->
-            <div id="userBadge" class="bg-slate-800 px-3.5 py-1.5 rounded-lg border border-slate-700 text-xs text-slate-300 hidden">
-                <i class="fa-solid fa-graduation-cap text-emerald-400 mr-1.5"></i>
-                학번: <span id="displayStudentId" class="font-semibold text-white">미등록</span>
+    <!-- Header -->
+    <header class="bg-slate-900 text-white shadow-lg py-4 px-6 border-b border-slate-700">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="p-2.5 bg-blue-600 rounded-xl shadow-md">
+                    <i class="fa-solid font-bold fa-flask-vial text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold tracking-tight">금속의 산화 정도 비교 가상 실험실</h1>
+                    <p class="text-xs text-slate-400">6홈판 반응 실험 &amp; 이온화 경향 ($\text{Zn} > \text{Cu} > \text{Ag}$)</p>
+                </div>
             </div>
             
-            <!-- 대시보드 관리자 접속용 스위처 -->
-            <button id="viewToggleBtn" onclick="openModeLockModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-2 rounded-xl border border-slate-700 transition flex items-center gap-2 text-xs font-medium">
-                <i class="fa-solid fa-chalkboard-user"></i>
-                <span id="viewModeText">교사용 대시보드</span>
-            </button>
+            <!-- Top Controls -->
+            <div class="flex items-center space-x-3">
+                <button onclick="resetAllWells()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-medium rounded-lg border border-slate-600 transition flex items-center space-x-2 shadow-sm">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    <span>전체 초기화</span>
+                </button>
+                <button onclick="toggleGuideModal()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition flex items-center space-x-2 shadow-sm">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>실험 가이드</span>
+                </button>
+            </div>
         </div>
     </header>
 
-    <main class="flex-1 p-4 lg:p-6 grid grid-cols-1 sm:grid-cols-2 gap-6 h-auto sm:h-[calc(100vh-88px)] overflow-y-auto sm:overflow-hidden max-w-[1600px] mx-auto w-full">
+    <!-- Main Content Grid -->
+    <main class="max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 my-auto">
         
-        <!-- 왼쪽: 실험 변인 제어판 (모든 변인 조작 해제 및 직접 타이핑 수치 입력형 설계) -->
-        <section id="studentControlPanel" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between overflow-y-auto shadow-2xl relative">
-            <div>
-                <div class="flex items-center justify-between mb-5 border-b border-slate-800 pb-3">
-                    <h2 class="text-base font-bold text-slate-200 flex items-center gap-2">
-                        <i class="fa-solid fa-sliders text-emerald-500"></i>
-                        실험 변인 제어판
-                    </h2>
-                    <div class="flex gap-2">
-                        <!-- 데이터 전송 및 초기화 트리거 -->
-                        <button onclick="sendDataToTeacher()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs px-3.5 py-1.5 rounded-lg transition-all flex items-center gap-1.5 shadow-md shadow-emerald-950/20 active:scale-95">
-                            <i class="fa-solid fa-paper-plane"></i> 데이터 보내기
-                        </button>
-                        <button onclick="resetVariables()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-1.5 rounded-lg border border-slate-700 transition active:scale-95">
-                            초기화
-                        </button>
+        <!-- Left/Center Column: 6-Well Plate and Observation -->
+        <div class="lg:col-span-8 flex flex-col gap-6">
+            
+            <!-- 6-Well Plate Vessel Container -->
+            <div class="glass-panel p-6 rounded-2xl shadow-xl relative border border-slate-200/80">
+                <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-200">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>
+                        <h2 class="text-lg font-bold text-slate-800">6홈판 (6-Well Plate)</h2>
                     </div>
+                    <span class="text-xs font-semibold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-200 flex items-center space-x-1">
+                        <i class="fa-regular fa-clock"></i>
+                        <span>반응 속도: 30초 실시간 관찰</span>
+                    </span>
                 </div>
 
-                <p class="text-xs text-slate-400 mb-6 leading-relaxed">
-                    💡 <span class="text-emerald-400 font-medium">자동 계산 변인</span>을 1개 설정한 후, 나머지 변인들을 자유롭게 조작하며 변화를 관찰하세요. (값 입력상자를 직접 클릭하여 원하는 숫자를 타이핑할 수도 있습니다.)
+                <!-- 6 Wells Grid (2 rows x 3 columns) -->
+                <div class="grid grid-cols-3 gap-4 md:gap-6 p-4 bg-slate-200/60 rounded-xl border border-slate-300 shadow-inner">
+                    <!-- Well Slot 1 -->
+                    <div class="flex flex-col items-center">
+                        <div id="well-1" onclick="selectWell(1)" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, 1)"
+                             class="well relative w-full aspect-square rounded-full flex flex-col items-center justify-center p-2 cursor-pointer border-4 border-slate-300 hover:border-blue-400">
+                            <span class="absolute top-2 left-4 text-xs font-bold text-slate-400 select-none">1</span>
+                            <div id="well-content-1" class="w-full h-full rounded-full overflow-hidden relative flex items-center justify-center"></div>
+                            <button onclick="event.stopPropagation(); clearWell(1)" title="홈 비우기" class="absolute -top-1 -right-1 w-6 h-6 bg-rose-500 hover:bg-rose-600 text-white rounded-full text-xs flex items-center justify-center shadow opacity-80 hover:opacity-100 transition z-30">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div id="well-info-1" class="mt-2 text-center w-full min-h-[2.5rem] flex flex-col items-center justify-start"></div>
+                    </div>
+
+                    <!-- Well Slot 2 -->
+                    <div class="flex flex-col items-center">
+                        <div id="well-2" onclick="selectWell(2)" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, 2)"
+                             class="well relative w-full aspect-square rounded-full flex flex-col items-center justify-center p-2 cursor-pointer border-4 border-slate-300 hover:border-blue-400">
+                            <span class="absolute top-2 left-4 text-xs font-bold text-slate-400 select-none">2</span>
+                            <div id="well-content-2" class="w-full h-full rounded-full overflow-hidden relative flex items-center justify-center"></div>
+                            <button onclick="event.stopPropagation(); clearWell(2)" title="홈 비우기" class="absolute -top-1 -right-1 w-6 h-6 bg-rose-500 hover:bg-rose-600 text-white rounded-full text-xs flex items-center justify-center shadow opacity-80 hover:opacity-100 transition z-30">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div id="well-info-2" class="mt-2 text-center w-full min-h-[2.5rem] flex flex-col items-center justify-start"></div>
+                    </div>
+
+                    <!-- Well Slot 3 -->
+                    <div class="flex flex-col items-center">
+                        <div id="well-3" onclick="selectWell(3)" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, 3)"
+                             class="well relative w-full aspect-square rounded-full flex flex-col items-center justify-center p-2 cursor-pointer border-4 border-slate-300 hover:border-blue-400">
+                            <span class="absolute top-2 left-4 text-xs font-bold text-slate-400 select-none">3</span>
+                            <div id="well-content-3" class="w-full h-full rounded-full overflow-hidden relative flex items-center justify-center"></div>
+                            <button onclick="event.stopPropagation(); clearWell(3)" title="홈 비우기" class="absolute -top-1 -right-1 w-6 h-6 bg-rose-500 hover:bg-rose-600 text-white rounded-full text-xs flex items-center justify-center shadow opacity-80 hover:opacity-100 transition z-30">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div id="well-info-3" class="mt-2 text-center w-full min-h-[2.5rem] flex flex-col items-center justify-start"></div>
+                    </div>
+
+                    <!-- Well Slot 4 -->
+                    <div class="flex flex-col items-center">
+                        <div id="well-4" onclick="selectWell(4)" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, 4)"
+                             class="well relative w-full aspect-square rounded-full flex flex-col items-center justify-center p-2 cursor-pointer border-4 border-slate-300 hover:border-blue-400">
+                            <span class="absolute top-2 left-4 text-xs font-bold text-slate-400 select-none">4</span>
+                            <div id="well-content-4" class="w-full h-full rounded-full overflow-hidden relative flex items-center justify-center"></div>
+                            <button onclick="event.stopPropagation(); clearWell(4)" title="홈 비우기" class="absolute -top-1 -right-1 w-6 h-6 bg-rose-500 hover:bg-rose-600 text-white rounded-full text-xs flex items-center justify-center shadow opacity-80 hover:opacity-100 transition z-30">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div id="well-info-4" class="mt-2 text-center w-full min-h-[2.5rem] flex flex-col items-center justify-start"></div>
+                    </div>
+
+                    <!-- Well Slot 5 -->
+                    <div class="flex flex-col items-center">
+                        <div id="well-5" onclick="selectWell(5)" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, 5)"
+                             class="well relative w-full aspect-square rounded-full flex flex-col items-center justify-center p-2 cursor-pointer border-4 border-slate-300 hover:border-blue-400">
+                            <span class="absolute top-2 left-4 text-xs font-bold text-slate-400 select-none">5</span>
+                            <div id="well-content-5" class="w-full h-full rounded-full overflow-hidden relative flex items-center justify-center"></div>
+                            <button onclick="event.stopPropagation(); clearWell(5)" title="홈 비우기" class="absolute -top-1 -right-1 w-6 h-6 bg-rose-500 hover:bg-rose-600 text-white rounded-full text-xs flex items-center justify-center shadow opacity-80 hover:opacity-100 transition z-30">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div id="well-info-5" class="mt-2 text-center w-full min-h-[2.5rem] flex flex-col items-center justify-start"></div>
+                    </div>
+
+                    <!-- Well Slot 6 -->
+                    <div class="flex flex-col items-center">
+                        <div id="well-6" onclick="selectWell(6)" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="handleDrop(event, 6)"
+                             class="well relative w-full aspect-square rounded-full flex flex-col items-center justify-center p-2 cursor-pointer border-4 border-slate-300 hover:border-blue-400">
+                            <span class="absolute top-2 left-4 text-xs font-bold text-slate-400 select-none">6</span>
+                            <div id="well-content-6" class="w-full h-full rounded-full overflow-hidden relative flex items-center justify-center"></div>
+                            <button onclick="event.stopPropagation(); clearWell(6)" title="홈 비우기" class="absolute -top-1 -right-1 w-6 h-6 bg-rose-500 hover:bg-rose-600 text-white rounded-full text-xs flex items-center justify-center shadow opacity-80 hover:opacity-100 transition z-30">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div id="well-info-6" class="mt-2 text-center w-full min-h-[2.5rem] flex flex-col items-center justify-start"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Well Inspector / Observation Board -->
+            <div class="glass-panel p-5 rounded-2xl shadow-lg border border-slate-200">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-slate-800 flex items-center space-x-2">
+                        <i class="fa-solid fa-microscope text-blue-600"></i>
+                        <span>선택한 홈 관찰 결과 (<span id="selected-well-num" class="text-blue-600">1</span>번 홈)</span>
+                    </h3>
+                    <div class="flex items-center space-x-2">
+                        <!-- Progress Bar & Timer Badge -->
+                        <div id="progress-container" class="hidden flex items-center space-x-2 bg-slate-100 px-3 py-1 rounded-full border border-slate-300">
+                            <div class="w-16 bg-slate-200 h-2 rounded-full overflow-hidden">
+                                <div id="progress-bar" class="bg-blue-600 h-full w-0 transition-all duration-300"></div>
+                            </div>
+                            <span id="timer-text" class="text-xs font-mono font-bold text-blue-600">0s / 30s</span>
+                        </div>
+                        <span id="reaction-badge" class="px-2.5 py-1 text-xs font-bold rounded-full bg-slate-200 text-slate-600">
+                            대기 중
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white/60 p-4 rounded-xl border border-slate-200 text-sm">
+                    <div>
+                        <div class="mb-2">
+                            <span class="font-semibold text-slate-500">투입 수용액:</span>
+                            <span id="detail-solution" class="font-bold text-slate-800 ml-1">없음</span>
+                        </div>
+                        <div>
+                            <span class="font-semibold text-slate-500">투입 금속:</span>
+                            <span id="detail-metal" class="font-bold text-slate-800 ml-1">없음</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="mb-2">
+                            <span class="font-semibold text-slate-500">실험 관찰:</span>
+                            <span id="detail-observation" class="text-slate-700 ml-1 block mt-0.5">수용액과 금속을 드래그하여 반응을 확인하세요.</span>
+                        </div>
+                    </div>
+                    <div class="md:col-span-2 pt-2 border-t border-slate-200">
+                        <span class="font-semibold text-slate-500">화학 반응식:</span>
+                        <div id="detail-equation" class="font-mono text-sm bg-slate-900 text-emerald-400 p-2.5 rounded-lg mt-1 overflow-x-auto shadow-inner">
+                            -
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Reagents & Metals Control Tray -->
+        <div class="lg:col-span-4 flex flex-col gap-6">
+            
+            <!-- Reagent Beakers Section (Solutions) -->
+            <div class="glass-panel p-5 rounded-2xl shadow-xl border border-slate-200 flex flex-col">
+                <div class="flex items-center space-x-2 mb-3 pb-2 border-b border-slate-200">
+                    <i class="fa-solid fa-flask text-amber-500 text-lg"></i>
+                    <h2 class="text-base font-bold text-slate-800">금속 염 수용액 (각 2mL)</h2>
+                </div>
+                <p class="text-xs text-slate-500 mb-3">비커를 6홈판으로 드래그하거나 선택 후 홈을 클릭하세요.</p>
+
+                <div class="grid grid-cols-1 gap-3">
+                    <!-- Solution 1: ZnSO4 -->
+                    <div draggable="true" ondragstart="handleDragStart(event, 'solution', 'znso4')" onclick="selectItem('solution', 'znso4')"
+                         id="item-solution-znso4"
+                         class="draggable-item p-3 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md flex items-center justify-between group">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-12 bg-slate-100 border-2 border-slate-300 rounded-b-lg rounded-t-sm relative flex items-end justify-center pb-1 overflow-hidden shadow-inner">
+                                <div class="w-full h-3/5 bg-slate-200/50 border-t border-slate-300"></div>
+                                <span class="absolute text-[10px] font-bold text-slate-500 bottom-1">Zn²⁺</span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-800">황산 아연 수용액</h4>
+                                <p class="text-xs text-slate-500">ZnSO₄ (무색)</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-grip-vertical text-slate-300 group-hover:text-slate-500"></i>
+                    </div>
+
+                    <!-- Solution 2: CuSO4 -->
+                    <div draggable="true" ondragstart="handleDragStart(event, 'solution', 'cuso4')" onclick="selectItem('solution', 'cuso4')"
+                         id="item-solution-cuso4"
+                         class="draggable-item p-3 bg-white rounded-xl border border-blue-200 shadow-sm hover:shadow-md flex items-center justify-between group">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-12 bg-blue-50 border-2 border-blue-300 rounded-b-lg rounded-t-sm relative flex items-end justify-center pb-1 overflow-hidden shadow-inner">
+                                <div class="w-full h-3/5 bg-blue-500/40 border-t border-blue-400"></div>
+                                <span class="absolute text-[10px] font-bold text-blue-700 bottom-1">Cu²⁺</span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-800">황산 구리 수용액</h4>
+                                <p class="text-xs text-blue-600 font-medium">CuSO₄ (푸른색)</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-grip-vertical text-slate-300 group-hover:text-slate-500"></i>
+                    </div>
+
+                    <!-- Solution 3: AgNO3 -->
+                    <div draggable="true" ondragstart="handleDragStart(event, 'solution', 'agno3')" onclick="selectItem('solution', 'agno3')"
+                         id="item-solution-agno3"
+                         class="draggable-item p-3 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md flex items-center justify-between group">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-12 bg-slate-50 border-2 border-slate-300 rounded-b-lg rounded-t-sm relative flex items-end justify-center pb-1 overflow-hidden shadow-inner">
+                                <div class="w-full h-3/5 bg-slate-100 border-t border-slate-300"></div>
+                                <span class="absolute text-[10px] font-bold text-slate-600 bottom-1">Ag⁺</span>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-800">질산 은 수용액</h4>
+                                <p class="text-xs text-slate-500">AgNO₃ (무색)</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-grip-vertical text-slate-300 group-hover:text-slate-500"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metal Pieces Section -->
+            <div class="glass-panel p-5 rounded-2xl shadow-xl border border-slate-200 flex flex-col">
+                <div class="flex items-center space-x-2 mb-3 pb-2 border-b border-slate-200">
+                    <i class="fa-solid fa-cubes text-emerald-600 text-lg"></i>
+                    <h2 class="text-base font-bold text-slate-800">금속 조각</h2>
+                </div>
+                <p class="text-xs text-slate-500 mb-3">금속 조각을 6홈판으로 드래그하여 투입하세요.</p>
+
+                <div class="grid grid-cols-1 gap-3">
+                    <!-- Metal 1: Zinc (Zn) -->
+                    <div draggable="true" ondragstart="handleDragStart(event, 'metal', 'zn')" onclick="selectItem('metal', 'zn')"
+                         id="item-metal-zn"
+                         class="draggable-item p-3 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md flex items-center justify-between group">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-slate-300 border-2 border-slate-400 rounded-lg flex items-center justify-center font-bold text-slate-700 shadow">
+                                Zn
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-800">아연 조각 (Zn)</h4>
+                                <p class="text-xs text-slate-500">회백색 금속</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-grip-vertical text-slate-300 group-hover:text-slate-500"></i>
+                    </div>
+
+                    <!-- Metal 2: Copper (Cu) -->
+                    <div draggable="true" ondragstart="handleDragStart(event, 'metal', 'cu')" onclick="selectItem('metal', 'cu')"
+                         id="item-metal-cu"
+                         class="draggable-item p-3 bg-white rounded-xl border border-amber-200 shadow-sm hover:shadow-md flex items-center justify-between group">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-amber-700 border-2 border-amber-800 rounded-lg flex items-center justify-center font-bold text-amber-100 shadow">
+                                Cu
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-800">구리 조각 (Cu)</h4>
+                                <p class="text-xs text-amber-700 font-medium">붉은 갈색 금속</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-grip-vertical text-slate-300 group-hover:text-slate-500"></i>
+                    </div>
+
+                    <!-- Metal 3: Silver (Ag) -->
+                    <div draggable="true" ondragstart="handleDragStart(event, 'metal', 'ag')" onclick="selectItem('metal', 'ag')"
+                         id="item-metal-ag"
+                         class="draggable-item p-3 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md flex items-center justify-between group">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-gradient-to-tr from-slate-200 to-white border-2 border-slate-300 rounded-lg flex items-center justify-center font-bold text-slate-600 shadow">
+                                Ag
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-800">은 조각 (Ag)</h4>
+                                <p class="text-xs text-slate-500">은백색 금속</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-grip-vertical text-slate-300 group-hover:text-slate-500"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ionization Tendency Reference Card -->
+            <div class="bg-gradient-to-r from-blue-900 to-slate-900 text-white p-4 rounded-2xl shadow-xl border border-blue-800">
+                <h4 class="text-xs uppercase tracking-wider font-bold text-blue-300 mb-2 flex items-center space-x-1.5">
+                    <i class="fa-solid fa-bolt text-yellow-400"></i>
+                    <span>금속의 이온화 경향 (반응성)</span>
+                </h4>
+                <div class="flex items-center justify-around bg-slate-800/80 p-3 rounded-xl border border-slate-700 font-bold text-base">
+                    <span class="text-emerald-400">Zn (아연)</span>
+                    <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+                    <span class="text-amber-400">Cu (구리)</span>
+                    <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+                    <span class="text-slate-200">Ag (은)</span>
+                </div>
+                <p class="text-[11px] text-slate-300 mt-2 leading-relaxed">
+                    * 이온화 경향이 큰 금속이 전자를 잃고 <b>산화(양이온화)</b>되며, 이온화 경향이 작은 금속 이온은 전자를 얻고 <b>환원(석출)</b>됩니다.
                 </p>
-
-                <!-- 4대 물리 변인 조작 장치 리스트 -->
-                <div class="space-y-4">
-                    <!-- 1. 압력 (P) 카드 -->
-                    <div id="card-P" class="bg-slate-950 border border-slate-800/80 rounded-xl p-4 transition-all">
-                        <div class="flex justify-between items-center mb-2.5">
-                            <span class="text-sm font-bold text-slate-200 flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                                압력 (P)
-                            </span>
-                            <label class="flex items-center gap-1.5 cursor-pointer">
-                                <input type="radio" name="depVar" value="P" class="text-emerald-500 focus:ring-0" onchange="changeDependentVariable('P')">
-                                <span class="text-[11px] text-slate-400 select-none">자동 계산</span>
-                            </label>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('P', -1)" class="btn-adjust bg-slate-800 hover:bg-slate-700 w-9 h-9 rounded-lg flex items-center justify-center text-slate-300 active:scale-90 transition">-1</button>
-                            <input type="range" id="slider-P" min="1" max="50" step="1" class="flex-1 accent-emerald-500" oninput="handleSliderChange('P', this.value)">
-                            <button onclick="adjustVal('P', 1)" class="btn-adjust bg-slate-800 hover:bg-slate-700 w-9 h-9 rounded-lg flex items-center justify-center text-slate-300 active:scale-90 transition">+1</button>
-                            <div class="relative w-24">
-                                <input type="number" id="input-P" min="1" max="50" step="1" class="w-full bg-slate-900 border border-slate-700 text-slate-100 text-sm font-semibold rounded-lg px-2.5 py-1.5 text-right focus:outline-none focus:border-emerald-500" onchange="handleInputChange('P', this.value)">
-                                <span class="absolute right-2 top-2 text-[10px] text-slate-400 pointer-events-none">atm</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 2. 부피 (V) 카드 -->
-                    <div id="card-V" class="bg-slate-950 border border-slate-800/80 rounded-xl p-4 transition-all">
-                        <div class="flex justify-between items-center mb-2.5">
-                            <span class="text-sm font-bold text-slate-200 flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-purple-500"></span>
-                                부피 (V)
-                            </span>
-                            <label class="flex items-center gap-1.5 cursor-pointer">
-                                <input type="radio" name="depVar" value="V" class="text-emerald-500 focus:ring-0" onchange="changeDependentVariable('V')">
-                                <span class="text-[11px] text-slate-400 select-none">자동 계산</span>
-                            </label>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('V', -1)" class="btn-adjust bg-slate-800 hover:bg-slate-700 w-9 h-9 rounded-lg flex items-center justify-center text-slate-300 active:scale-90 transition">-1</button>
-                            <input type="range" id="slider-V" min="1" max="100" step="1" class="flex-1 accent-emerald-500" oninput="handleSliderChange('V', this.value)">
-                            <button onclick="adjustVal('V', 1)" class="btn-adjust bg-slate-800 hover:bg-slate-700 w-9 h-9 rounded-lg flex items-center justify-center text-slate-300 active:scale-90 transition">+1</button>
-                            <div class="relative w-24">
-                                <input type="number" id="input-V" min="1" max="100" step="1" class="w-full bg-slate-900 border border-slate-700 text-slate-100 text-sm font-semibold rounded-lg px-2.5 py-1.5 text-right focus:outline-none focus:border-emerald-500" onchange="handleInputChange('V', this.value)">
-                                <span class="absolute right-2 top-2 text-[10px] text-slate-400 pointer-events-none">L</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 3. 기체의 양 (n) 카드 -->
-                    <div id="card-n" class="bg-slate-950 border border-slate-800/80 rounded-xl p-4 transition-all">
-                        <div class="flex justify-between items-center mb-2.5">
-                            <span class="text-sm font-bold text-slate-200 flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
-                                기체의 양 (n)
-                            </span>
-                            <label class="flex items-center gap-1.5 cursor-pointer">
-                                <input type="radio" name="depVar" value="n" class="text-emerald-500 focus:ring-0" onchange="changeDependentVariable('n')">
-                                <span class="text-[11px] text-slate-400 select-none">자동 계산</span>
-                            </label>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('n', -1)" class="btn-adjust bg-slate-800 hover:bg-slate-700 w-9 h-9 rounded-lg flex items-center justify-center text-slate-300 active:scale-90 transition">-1</button>
-                            <input type="range" id="slider-n" min="1" max="15" step="1" class="flex-1 accent-emerald-500" oninput="handleSliderChange('n', this.value)">
-                            <button onclick="adjustVal('n', 1)" class="btn-adjust bg-slate-800 hover:bg-slate-700 w-9 h-9 rounded-lg flex items-center justify-center text-slate-300 active:scale-90 transition">+1</button>
-                            <div class="relative w-24">
-                                <input type="number" id="input-n" min="1" max="15" step="1" class="w-full bg-slate-900 border border-slate-700 text-slate-100 text-sm font-semibold rounded-lg px-2.5 py-1.5 text-right focus:outline-none focus:border-emerald-500" onchange="handleInputChange('n', this.value)">
-                                <span class="absolute right-2 top-2 text-[10px] text-slate-400 pointer-events-none">mol</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 4. 온도 (T) 카드 -->
-                    <div id="card-T" class="bg-slate-950 border border-slate-800/80 rounded-xl p-4 transition-all">
-                        <div class="flex justify-between items-center mb-2.5">
-                            <span class="text-sm font-bold text-slate-200 flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                                온도 (T)
-                            </span>
-                            <label class="flex items-center gap-1.5 cursor-pointer">
-                                <input type="radio" name="depVar" value="T" class="text-emerald-500 focus:ring-0" onchange="changeDependentVariable('T')">
-                                <span class="text-[11px] text-slate-400 select-none">자동 계산</span>
-                            </label>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('T', -10)" class="btn-adjust bg-slate-800 hover:bg-slate-700 w-9 h-9 rounded-lg flex items-center justify-center text-slate-300 active:scale-90 transition">-10</button>
-                            <input type="range" id="slider-T" min="50" max="1000" step="1" class="flex-1 accent-emerald-500" oninput="handleSliderChange('T', this.value)">
-                            <button onclick="adjustVal('T', 10)" class="btn-adjust bg-slate-800 hover:bg-slate-700 w-9 h-9 rounded-lg flex items-center justify-center text-slate-300 active:scale-90 transition">+10</button>
-                            <div class="relative w-24">
-                                <input type="number" id="input-T" min="50" max="1000" step="1" class="w-full bg-slate-900 border border-slate-700 text-slate-100 text-sm font-semibold rounded-lg px-2.5 py-1.5 text-right focus:outline-none focus:border-emerald-500" onchange="handleInputChange('T', this.value)">
-                                <span class="absolute right-2 top-2 text-[10px] text-slate-400 pointer-events-none">K</span>
-                            </div>
-                        </div>
-                        <!-- 섭씨온도 자동 변환 계산기 -->
-                        <div class="text-right text-[11px] text-rose-400 mt-1.5">
-                            섭씨온도 환산: 약 <span id="celsiusValue">-273.1</span> °C
-                        </div>
-                    </div>
-                </div>
             </div>
 
-            <!-- 전송 카운터 디스플레이 -->
-            <div class="mt-4 bg-slate-950 border border-slate-800 p-3 rounded-xl text-center text-xs text-slate-400">
-                <span>실시간 전송 횟수: <span id="localSubmitCount" class="text-emerald-400 font-bold">0</span>회</span>
-            </div>
-        </section>
-
-        <section class="flex flex-col gap-6 h-full overflow-hidden">
-            <!-- 가상 실린더 실험기 (오개념 방지 설계) -->
-            <div class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col min-h-[300px] shadow-2xl relative">
-                <h2 class="text-sm font-bold text-slate-200 mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-industry text-purple-400"></i>
-                    가상 피스톤 실린더
-                </h2>
-                
-                <!-- 기체 입자 캔버스 도화지 -->
-                <div class="flex-1 bg-slate-950 rounded-xl relative overflow-hidden border border-slate-800 flex items-center justify-center">
-                    <canvas id="gasCanvas" class="absolute inset-0 w-full h-full block"></canvas>
-                </div>
-            </div>
-
-            <!-- 실시간 물리량의 분수비 계산 영역 -->
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl">
-                <h3 class="text-sm font-bold text-slate-300 mb-3 flex items-center gap-1.5">
-                    <i class="fa-solid fa-calculator text-blue-400"></i>
-                    실시간 물리량의 분수비 계산
-                </h3>
-                
-                <div class="bg-slate-950 border border-slate-800/80 p-4 rounded-xl flex items-center justify-center gap-4">
-                    <div class="flex items-center text-slate-100 font-medium">
-                        <!-- PV / nT 분수 수식 표현 -->
-                        <div class="flex items-center gap-1.5 px-4 py-2 border-r border-slate-800">
-                            <div class="flex flex-col items-center justify-center font-black text-slate-400 tracking-wider">
-                                <span class="text-sm">PV</span>
-                                <hr class="w-8 border-slate-500 my-0.5">
-                                <span class="text-sm">nT</span>
-                            </div>
-                        </div>
-
-                        <div class="text-xl font-bold px-3 text-slate-500">=</div>
-
-                        <!-- 실시간 물리 수치 대입 수식 -->
-                        <div class="flex flex-col items-center justify-center px-4 py-2">
-                            <span class="text-sm font-semibold text-slate-300">
-                                <span id="formula-P" class="text-blue-400">1.0</span> <span class="text-slate-500">×</span> <span id="formula-V" class="text-purple-400">22.4</span>
-                            </span>
-                            <hr class="w-28 border-slate-700 my-1">
-                            <span class="text-sm font-semibold text-slate-300">
-                                <span id="formula-n" class="text-yellow-400">1.0</span> <span class="text-slate-500">×</span> <span id="formula-T" class="text-red-400">273.0</span>
-                            </span>
-                        </div>
-
-                        <div class="text-xl font-bold px-3 text-slate-500">=</div>
-
-                        <!-- 최종 수용 기체 상수 결과 (소수점 셋째자리 수렴) -->
-                        <div class="bg-slate-900/80 border border-slate-800 px-5 py-2.5 rounded-xl text-center">
-                            <div class="text-xs text-slate-400 font-bold mb-0.5">상태비 결과</div>
-                            <div id="ratioResult" class="text-lg font-black text-emerald-400 tracking-wider">0.082</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+        </div>
     </main>
 
-    <section id="teacherDashboard" class="fixed inset-0 bg-slate-950 z-20 hidden flex-col">
-        <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between shadow-md">
-            <div class="flex items-center gap-3">
-                <div class="bg-purple-500/10 p-2 rounded-lg border border-purple-500/30 text-purple-400">
-                    <i class="fa-solid fa-chart-line text-lg animate-pulse"></i>
-                </div>
-                <div>
-                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                        실시간 교사용 모니터링 관리자 콘솔
-                        <span class="inline-flex items-center gap-1.5 text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">
-                            <span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping"></span>
-                            API 동기화 활성
-                        </span>
-                    </h2>
-                    <p class="text-xs text-slate-400">학급 학생들의 가상 실험 실시간 전송 현황판 (스프레드시트 연동)</p>
-                </div>
-            </div>
-            
-            <div class="flex items-center gap-3">
-                <!-- 테이블 백업 및 전체 정화 버튼 제공 -->
-                <button onclick="downloadCSV()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-xl border border-slate-700 text-xs font-semibold transition active:scale-95">
-                    <i class="fa-solid fa-file-excel mr-1.5 text-emerald-400"></i>엑셀 백업 (.csv)
-                </button>
-                <button onclick="openConfirmModal()" class="bg-rose-900/30 hover:bg-rose-900/50 text-rose-400 px-4 py-2 rounded-xl border border-rose-800/50 text-xs font-semibold transition active:scale-95">
-                    학급 데이터 초기화
-                </button>
-                <button onclick="closeTeacherDashboard()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-xl text-xs font-semibold transition active:scale-95">
-                    학생 실험실로 복귀
-                </button>
-            </div>
-        </header>
-
-        <!-- 대시보드 내부 메인 콘솔 -->
-        <div class="flex-1 p-6 overflow-y-auto space-y-6">
-            <!-- 24인 기준 실시간 통계 산출 위젯 -->
-            <div class="grid grid-cols-3 gap-6">
-                <!-- 참여 학생 카드 -->
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between shadow-lg">
-                    <div>
-                        <p class="text-xs font-medium text-slate-400">참여 학생 수</p>
-                        <h3 class="text-2xl font-extrabold text-white mt-1">
-                            <span id="stat-activeStudents" class="text-emerald-400">0</span> / 24 명
-                        </h3>
-                    </div>
-                    <div class="bg-emerald-500/10 p-3.5 rounded-xl border border-emerald-500/20 text-emerald-400">
-                        <i class="fa-solid fa-users text-xl"></i>
-                    </div>
-                </div>
-                <!-- 평균 시도 카드 -->
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between shadow-lg">
-                    <div>
-                        <p class="text-xs font-medium text-slate-400">학생당 평균 제출횟수</p>
-                        <h3 class="text-2xl font-extrabold text-white mt-1">
-                            <span id="stat-avgSubmissions" class="text-blue-400">0.0</span> 회
-                        </h3>
-                    </div>
-                    <div class="bg-blue-500/10 p-3.5 rounded-xl border border-blue-500/20 text-blue-400">
-                        <i class="fa-solid fa-paper-plane text-xl"></i>
-                    </div>
-                </div>
-                <!-- 미참여 학생 카드 -->
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between shadow-lg">
-                    <div>
-                        <p class="text-xs font-medium text-slate-400">미참여 학생 수 (24명 기준)</p>
-                        <h3 class="text-2xl font-extrabold text-white mt-1">
-                            <span id="stat-inactiveStudents" class="text-rose-400">24</span> 명
-                        </h3>
-                    </div>
-                    <div class="bg-rose-500/10 p-3.5 rounded-xl border border-rose-500/20 text-rose-400">
-                        <i class="fa-solid fa-user-slash text-xl"></i>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 누적 학생 데이터 표 영역 -->
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-                <div class="p-4 border-b border-slate-800 bg-slate-900/60 flex justify-between items-center">
-                    <h4 class="text-sm font-bold text-slate-200">전체 누적 실험 데이터 로그 (실시간 학번 정렬 반영)</h4>
-                    <span class="text-[11px] text-slate-400">※ 학생들이 [데이터 보내기]를 누를 때마다 기록이 누적되며, 학번순으로 상시 정렬됩니다.</span>
-                </div>
-                
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs border-collapse">
-                        <thead class="bg-slate-950 text-slate-400 font-bold border-b border-slate-800 uppercase">
-                            <tr>
-                                <th class="px-6 py-3.5">정렬순번</th>
-                                <th class="px-6 py-3.5">학번</th>
-                                <th class="px-6 py-3.5 text-center">전송 회차</th>
-                                <th class="px-6 py-3.5">압력 (P)</th>
-                                <th class="px-6 py-3.5">부피 (V)</th>
-                                <th class="px-6 py-3.5">기체의 양 (n)</th>
-                                <th class="px-6 py-3.5">온도 (T)</th>
-                                <th class="px-6 py-3.5 text-center">분수비 (PV/nT)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="teacherTableBody" class="divide-y divide-slate-800/60">
-                            <tr>
-                                <td colspan="8" class="px-6 py-12 text-center text-slate-500 text-sm">
-                                    <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 text-purple-400 block"></i>
-                                    데이터베이스와 원격 동기화하는 중입니다...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <div id="loadingModal" class="fixed inset-0 bg-slate-950/80 z-50 hidden flex items-center justify-center p-4 animate-fade-in">
-        <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col items-center gap-4 shadow-2xl max-w-xs w-full text-center">
-            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-emerald-400"></i>
-            <div>
-                <p id="loadingMessage" class="text-sm font-semibold text-white">클라우드로 전송 중...</p>
-                <p class="text-[11px] text-slate-400 mt-1">창을 닫거나 새로고침하지 마세요.</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- 학생 가상 세션 자동 등록 모달 (개인정보 완벽 보안) -->
-    <div id="studentLoginModal" class="fixed inset-0 bg-slate-950/90 z-30 flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 max-w-sm w-full rounded-2xl p-6 shadow-2xl relative">
-            <div class="text-center mb-6">
-                <div class="inline-block bg-emerald-500/10 text-emerald-400 p-3 rounded-2xl border border-emerald-500/20 mb-3">
-                    <i class="fa-solid fa-fingerprint text-2xl"></i>
-                </div>
-                <h3 class="text-lg font-bold text-white">가상 실험실 학생 세션 등록</h3>
-                <p class="text-xs text-slate-400 mt-1">실험 결과 전송을 위해 고유 학번만 입력해 주세요.</p>
-            </div>
-
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">학번 (숫자 4자리)</label>
-                    <input type="text" id="studentIdInput" maxlength="4" placeholder="예: 2105" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 text-sm font-semibold tracking-widest text-center focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition" onkeydown="if(event.key === 'Enter') registerStudentSession()">
-                    <p id="studentError" class="text-[11px] text-rose-500 mt-1 hidden"></p>
-                </div>
-                
-                <button onclick="registerStudentSession()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-sm transition active:scale-[0.98]">
-                    등록 완료 및 가상 실험 시작
-                </button>
-            </div>
-            
-            <p class="text-[10px] text-center text-slate-500 mt-4 leading-relaxed">
-                * 성명 등 일체의 다른 개인정보는 수집하지 않습니다.
-            </p>
-        </div>
-    </div>
-
-    <!-- 교사용 비밀번호 잠금 해제 모달 (비밀번호: 5400) -->
-    <div id="modeLockModal" class="fixed inset-0 bg-slate-950/80 z-40 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 max-w-sm w-full rounded-2xl p-6 shadow-2xl relative">
-            <button onclick="closeModeLockModal()" class="absolute top-4 right-4 text-slate-500 hover:text-slate-300">
-                <i class="fa-solid fa-xmark text-lg"></i>
+    <!-- Guide Modal -->
+    <div id="guide-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white max-w-lg w-full rounded-2xl p-6 shadow-2xl border border-slate-200 relative">
+            <button onclick="toggleGuideModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-xl"></i>
             </button>
-            
-            <div class="text-center mb-6">
-                <div class="inline-block bg-purple-500/10 text-purple-400 p-3 rounded-2xl border border-purple-500/20 mb-3">
-                    <i class="fa-solid fa-key text-2xl"></i>
-                </div>
-                <h3 class="text-lg font-bold text-white">교사용 대시보드 잠금 해제</h3>
-                <p class="text-xs text-slate-400 mt-1">대시보드 접속을 위해 관리자 암호를 입력하세요.</p>
-            </div>
-
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-300 mb-1.5">관리자 비밀번호</label>
-                    <input type="password" id="teacherPwInput" placeholder="비밀번호 입력" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 text-sm font-semibold text-center tracking-widest focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition" onkeydown="if(event.key === 'Enter') checkTeacherPassword()">
-                    <p id="passwordError" class="text-[11px] text-rose-500 mt-1 hidden">비밀번호가 일치하지 않습니다.</p>
-                </div>
-                
-                <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl text-center">
-                    <span class="text-[11px] text-slate-400">비밀번호 힌트: <span class="text-purple-400 font-medium">삼성여자고등학교</span></span>
-                </div>
-
-                <button onclick="checkTeacherPassword()" class="w-full bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-xl font-bold text-sm transition active:scale-[0.98]">
-                    확인 및 로그인
-                </button>
-            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-3 flex items-center space-x-2">
+                <i class="fa-solid fa-flask text-blue-600"></i>
+                <span>실험 방법 안내</span>
+            </h3>
+            <ol class="list-decimal list-inside text-sm text-slate-600 space-y-2.5 mb-5">
+                <li>우측 <b>수용액 비커</b>를 6홈판 중 원하는 번호의 홈으로 드래그하여 수용액 2mL를 투입합니다.</li>
+                <li>수용액이 투입되면 홈 바로 아래에 해당 수용액 이름이 표시됩니다.</li>
+                <li>우측 <b>금속 조각</b>을 수용액이 채워진 홈으로 드래그하여 집어넣습니다.</li>
+                <li><b>30초 동안 진행되는 실시간 반응</b>을 통해 색 변화 및 금속 주변의 결정 석출을 관찰합니다.</li>
+                <li>하단의 <b>선택한 홈 관찰 결과</b>에서 알짜 이온 반응식과 산화·환원 상세 원리를 확인하세요.</li>
+                <li>모바일이나 터치 환경에서는 아이콘을 한번 클릭한 후 원하는 홈을 터치하여 투입할 수도 있습니다.</li>
+            </ol>
+            <button onclick="toggleGuideModal()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition shadow">
+                확인 및 실험 시작
+            </button>
         </div>
     </div>
 
-    <!-- 학급 데이터 영구 초기화 확인용 커스텀 모달 -->
-    <div id="customConfirmModal" class="fixed inset-0 bg-slate-950/90 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-rose-900 max-w-sm w-full rounded-2xl p-6 shadow-2xl text-center">
-            <div class="inline-block bg-rose-500/10 text-rose-400 p-3 rounded-2xl border border-rose-500/20 mb-3">
-                <i class="fa-solid fa-circle-exclamation text-2xl animate-bounce"></i>
-            </div>
-            <h3 class="text-lg font-bold text-white mb-2">학급 데이터 영구 초기화</h3>
-            <p class="text-xs text-slate-400 leading-relaxed mb-6">
-                경고: 현재 구글 스프레드시트에 저장된 전 학급의 실시간 제출 실험 데이터가 영구히 완전 소거됩니다. 정말로 초기화하시겠습니까?
-            </p>
-            <div class="flex gap-3">
-                <button onclick="closeConfirmModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 py-3 rounded-xl text-xs font-bold transition">
-                    취소
-                </button>
-                <button onclick="confirmClearClassData()" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white py-3 rounded-xl text-xs font-bold transition">
-                    초기화 확인
-                </button>
-            </div>
-        </div>
-    </div>
-
+    <!-- Script Block -->
     <script>
-        // =======================================================
-        // 🔗 [설정필수] 구글 Apps Script 배포 완료 주소
-        // =======================================================
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz5oWOYXZGwnAeklqxYoWFftIQMFu5zhgInmDOwAY9GZxHnyY0rjF4Catc_9KsXNlaY/exec";
+        const TOTAL_REACTION_TIME = 30; // 30 seconds timer
 
-        /* 글로벌 실험 상태 변수 */
-        let state = {
-            P: 1.0,           // 압력 (atm)
-            V: 22.4,          // 부피 (L)
-            n: 1.0,           // 기체의 양 (mol)
-            T: 273.0,         // 절대온도 (K)
-            depVar: 'T',      // 자동 계산 변인 (기본값: 온도)
-            submitCount: 0,   // 해당 기기에서 학생의 제출 횟수
-            studentId: ""     // 학생 학번
+        // State store for 6 wells
+        const wells = {
+            1: { solution: null, metal: null, state: 'empty', progress: 0, timer: null },
+            2: { solution: null, metal: null, state: 'empty', progress: 0, timer: null },
+            3: { solution: null, metal: null, state: 'empty', progress: 0, timer: null },
+            4: { solution: null, metal: null, state: 'empty', progress: 0, timer: null },
+            5: { solution: null, metal: null, state: 'empty', progress: 0, timer: null },
+            6: { solution: null, metal: null, state: 'empty', progress: 0, timer: null }
         };
 
-        const R_CONST = 0.082057; // 이상기체 기체상수 R
-        let particleList = [];    // 기체 입자 저장 배열
-        let activeClassData = []; // 교사용 대시보드에 적재될 실시간 수집 배열
+        let selectedWellId = 1;
+        let activeDragData = null; // Stores item info during drag or click-selection
 
-        // Canvas 전역 자원
-        let canvas = document.getElementById('gasCanvas');
-        let ctx = canvas.getContext('2d');
-        let animationFrameId = null;
-        let dashboardPollInterval = null;
-
-        window.onload = function() {
-            // 로컬스토리지 세션 자동 복구
-            const savedId = localStorage.getItem("STUDENT_ID");
-            const savedCount = localStorage.getItem("SUBMIT_COUNT");
-            
-            if (savedId && savedId.length === 4) {
-                state.studentId = savedId;
-                state.submitCount = parseInt(savedCount || "0", 10);
-                document.getElementById('studentLoginModal').classList.add('hidden');
-                document.getElementById('userBadge').classList.remove('hidden');
-                document.getElementById('displayStudentId').innerText = savedId;
-                document.getElementById('localSubmitCount').innerText = state.submitCount;
-            }
-
-            initSimulation();
-            window.addEventListener('resize', resizeCanvas);
-            resizeCanvas();
-            animateLoop();
+        // Metadata definitions
+        const solutionsData = {
+            znso4: { name: '황산 아연 수용액', shortName: '황산 아연 (ZnSO₄)', ion: 'Zn²⁺' },
+            cuso4: { name: '황산 구리 수용액', shortName: '황산 구리 (CuSO₄)', ion: 'Cu²⁺' },
+            agno3: { name: '질산 은 수용액', shortName: '질산 은 (AgNO₃)', ion: 'Ag⁺' }
         };
 
-        // 로딩 바 제어 헬퍼
-        function showLoading(msg) {
-            document.getElementById('loadingMessage').innerText = msg;
-            document.getElementById('loadingModal').classList.remove('hidden');
+        const metalsData = {
+            zn: { name: '아연 (Zn)', symbol: 'Zn', color: '#94a3b8', textColor: '#1e293b' },
+            cu: { name: '구리 (Cu)', symbol: 'Cu', color: '#b45309', textColor: '#ffffff' },
+            ag: { name: '은 (Ag)', symbol: 'Ag', color: '#e2e8f0', textColor: '#334155' }
+        };
+
+        // Ionization Tendency order: Zn (3) > Cu (2) > Ag (1)
+        const reactivityRank = { zn: 3, cu: 2, ag: 1 };
+
+        // Initialize display
+        window.addEventListener('DOMContentLoaded', () => {
+            renderAllWells();
+            updateInspector();
+        });
+
+        // Toggle Modal
+        function toggleGuideModal() {
+            const modal = document.getElementById('guide-modal');
+            modal.classList.toggle('hidden');
         }
 
-        function hideLoading() {
-            document.getElementById('loadingModal').classList.add('hidden');
+        // Drag & Drop Handlers
+        function handleDragStart(e, type, id) {
+            activeDragData = { type, id };
+            e.dataTransfer.setData('text/plain', JSON.stringify(activeDragData));
+            e.dataTransfer.effectAllowed = 'copy';
         }
 
-        // 학생 학번 등록 처리
-        function registerStudentSession() {
-            const val = document.getElementById('studentIdInput').value.trim();
-            const errorEl = document.getElementById('studentError');
+        function allowDrop(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+        }
+
+        function dragEnter(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function dragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(e, wellNum) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
             
-            if (!/^\d{4}$/.test(val)) {
-                errorEl.innerText = "올바른 4자리 숫자의 학번을 입력해 주세요.";
-                errorEl.classList.remove('hidden');
-                return;
+            let data = activeDragData;
+            try {
+                const transferData = e.dataTransfer.getData('text/plain');
+                if (transferData) {
+                    data = JSON.parse(transferData);
+                }
+            } catch (err) {
+                // Use activeDragData fallback
             }
 
-            errorEl.classList.add('hidden');
-            state.studentId = val;
-            state.submitCount = 0;
-            localStorage.setItem("STUDENT_ID", val);
-            localStorage.setItem("SUBMIT_COUNT", "0");
+            if (!data) return;
 
-            document.getElementById('displayStudentId').innerText = val;
-            document.getElementById('localSubmitCount').innerText = "0";
-            document.getElementById('userBadge').classList.remove('hidden');
-            document.getElementById('studentLoginModal').classList.add('hidden');
+            applyItemToWell(wellNum, data.type, data.id);
+            activeDragData = null;
+            clearSelectionHighlight();
         }
 
-        // 교사용 패스워드 검증
-        function checkTeacherPassword() {
-            const inputVal = document.getElementById('teacherPwInput').value;
-            const errorEl = document.getElementById('passwordError');
-            
-            if (inputVal === "5400") {
-                errorEl.classList.add('hidden');
-                closeModeLockModal();
-                document.getElementById('teacherDashboard').classList.remove('hidden');
-                startDashboardPolling();
-            } else {
-                errorEl.classList.remove('hidden');
+        // Click-to-select alternative for accessibility & mobile
+        function selectItem(type, id) {
+            activeDragData = { type, id };
+            clearSelectionHighlight();
+            const elem = document.getElementById(`item-${type}-${id}`);
+            if (elem) {
+                elem.classList.add('ring-2', 'ring-blue-500', 'bg-blue-50/50');
             }
         }
 
-        function openModeLockModal() {
-            document.getElementById('teacherPwInput').value = "";
-            document.getElementById('passwordError').classList.add('hidden');
-            document.getElementById('modeLockModal').classList.remove('hidden');
+        function clearSelectionHighlight() {
+            document.querySelectorAll('.draggable-item').forEach(el => {
+                el.classList.remove('ring-2', 'ring-blue-500', 'bg-blue-50/50');
+            });
         }
 
-        function closeModeLockModal() {
-            document.getElementById('modeLockModal').classList.add('hidden');
-        }
+        function selectWell(wellNum) {
+            selectedWellId = wellNum;
 
-        function closeTeacherDashboard() {
-            document.getElementById('teacherDashboard').classList.add('hidden');
-            stopDashboardPolling();
-        }
-
-        function startDashboardPolling() {
-            fetchTeacherData();
-            dashboardPollInterval = setInterval(fetchTeacherData, 4000); // 4초마다 갱신
-        }
-
-        function stopDashboardPolling() {
-            if (dashboardPollInterval) {
-                clearInterval(dashboardPollInterval);
-                dashboardPollInterval = null;
-            }
-        }
-
-        // 원격 API 통신: 시트 데이터 가져오기 (CORS 우회 fetch 설계)
-        function fetchTeacherData() {
-            if (SCRIPT_URL.includes("여기에")) {
-                renderTeacherDashboard([]);
-                return;
-            }
-            
-            fetch(`${SCRIPT_URL}?action=read`)
-                .then(res => res.json())
-                .then(data => {
-                    activeClassData = data;
-                    renderTeacherDashboard(data);
-                })
-                .catch(err => {
-                    console.error("데이터 로드 실패:", err);
-                });
-        }
-
-        // 원격 API 통신: 수동 데이터 보내기 (Preflight 발생 방지 text/plain 페이로드 전송)
-        function sendDataToTeacher() {
-            if (!state.studentId || state.studentId.length !== 4) {
-                document.getElementById('studentLoginModal').classList.remove('hidden');
-                return;
-            }
-
-            if (SCRIPT_URL.includes("여기에")) {
-                showToastNotification("⚠️ 구글 웹앱 URL 주소가 아직 구성되지 않았습니다.");
-                return;
-            }
-
-            showLoading("데이터 전송 중...");
-
-            const nextCount = state.submitCount + 1;
-            const ratioVal = (state.P * state.V) / (state.n * state.T);
-
-            const payload = {
-                studentId: state.studentId,
-                round: nextCount,
-                P: state.P,
-                V: state.V,
-                n: state.n,
-                T: state.T,
-                ratio: ratioVal
-            };
-
-            fetch(SCRIPT_URL, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "text/plain" // Preflight 차단을 위해 text/plain 명세 유지
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(res => res.json())
-            .then(res => {
-                hideLoading();
-                if (res && res.success) {
-                    state.submitCount = nextCount;
-                    localStorage.setItem("SUBMIT_COUNT", state.submitCount.toString());
-                    document.getElementById('localSubmitCount').innerText = state.submitCount;
-                    showToastNotification(`${state.studentId} 학번의 [${state.submitCount}회차] 데이터 전송 완료!`);
+            // Highlight selected well border
+            for (let i = 1; i <= 6; i++) {
+                const wellEl = document.getElementById(`well-${i}`);
+                if (i === wellNum) {
+                    wellEl.classList.add('ring-4', 'ring-blue-500');
                 } else {
-                    showToastNotification("⚠️ 구글 스프레드시트 반영에 실패했습니다.");
+                    wellEl.classList.remove('ring-4', 'ring-blue-500');
                 }
-            })
-            .catch(err => {
-                hideLoading();
-                showToastNotification("⚠️ 서버 연결 오류가 발생했습니다.");
-                console.error(err);
-            });
-        }
-
-        function changeDependentVariable(varName) {
-            state.depVar = varName;
-            
-            ['P', 'V', 'n', 'T'].forEach(v => {
-                const card = document.getElementById(`card-${v}`);
-                const slider = document.getElementById(`slider-${v}`);
-                const input = document.getElementById(`input-${v}`);
-                
-                if (v === varName) {
-                    card.classList.remove('bg-slate-950', 'border-slate-800/80');
-                    card.classList.add('bg-slate-900', 'border-emerald-500/40', 'ring-1', 'ring-emerald-500/20');
-                    slider.disabled = true;
-                    input.disabled = true;
-                } else {
-                    card.classList.remove('bg-slate-900', 'border-emerald-500/40', 'ring-1', 'ring-emerald-500/20');
-                    card.classList.add('bg-slate-950', 'border-slate-800/80');
-                    slider.disabled = false;
-                    input.disabled = false;
-                }
-            });
-
-            const radio = document.querySelector(`input[name="depVar"][value="${varName}"]`);
-            if (radio) radio.checked = true;
-
-            recalculate();
-        }
-
-        function recalculate() {
-            if (state.depVar === 'P') {
-                state.P = (state.n * R_CONST * state.T) / state.V;
-            } else if (state.depVar === 'V') {
-                state.V = (state.n * R_CONST * state.T) / state.P;
-            } else if (state.depVar === 'n') {
-                state.n = (state.P * state.V) / (R_CONST * state.T);
-            } else if (state.depVar === 'T') {
-                state.T = (state.P * state.V) / (state.n * R_CONST);
             }
 
-            updateUI();
-        }
-
-        // 수동 제어 조작 핸들러
-        function handleSliderChange(variable, val) {
-            state[variable] = parseFloat(val);
-            recalculate();
-        }
-
-        function handleInputChange(variable, val) {
-            let num = parseFloat(val);
-            if (isNaN(num)) return;
-
-            // 허용 임계 가이드 수치 보정
-            if (variable === 'P') num = Math.max(1, Math.min(50, num));
-            if (variable === 'V') num = Math.max(1, Math.min(100, num));
-            if (variable === 'n') num = Math.max(1, Math.min(15, num));
-            if (variable === 'T') num = Math.max(50, Math.min(1000, num));
-
-            state[variable] = num;
-            recalculate();
-        }
-
-        function adjustVal(variable, delta) {
-            if (state.depVar === variable) return; 
-            
-            let newVal = state[variable] + delta;
-            
-            if (variable === 'P') newVal = Math.max(1, Math.min(50, newVal));
-            if (variable === 'V') newVal = Math.max(1, Math.min(100, newVal));
-            if (variable === 'n') newVal = Math.max(1, Math.min(15, newVal));
-            if (variable === 'T') newVal = Math.max(50, Math.min(1000, newVal));
-
-            state[variable] = newVal;
-            recalculate();
-        }
-
-        // 상태 수치 갱신 렌더러
-        function updateUI() {
-            ['P', 'V', 'n', 'T'].forEach(v => {
-                const slider = document.getElementById(`slider-${v}`);
-                const input = document.getElementById(`input-${v}`);
-                if (slider) slider.value = Math.round(state[v]);
-                if (input) input.value = state[v].toFixed(1);
-            });
-
-            const celsius = state.T - 273.15;
-            document.getElementById('celsiusValue').innerText = celsius.toFixed(1);
-
-            document.getElementById('formula-P').innerText = state.P.toFixed(1);
-            document.getElementById('formula-V').innerText = state.V.toFixed(1);
-            document.getElementById('formula-n').innerText = state.n.toFixed(1);
-            document.getElementById('formula-T').innerText = state.T.toFixed(1);
-
-            const ratio = (state.P * state.V) / (state.n * state.T);
-            document.getElementById('ratioResult').innerText = isNaN(ratio) || !isFinite(ratio) ? "0.000" : ratio.toFixed(3);
-
-            syncParticles();
-        }
-
-        function initSimulation() {
-            state.P = 1.0;
-            state.V = 22.4;
-            state.n = 1.0;
-            changeDependentVariable('T');
-        }
-
-        function resetVariables() {
-            initSimulation();
-        }
-
-        function resizeCanvas() {
-            const rect = canvas.parentNode.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
-        }
-
-        // 기체 분자 물리 속도 및 운동 에너지 동기화
-        function syncParticles() {
-            const targetCount = Math.round(state.n * 10);
-            
-            while (particleList.length < targetCount) {
-                particleList.push({
-                    x: Math.random() * (canvas.width - 40) + 20,
-                    y: Math.random() * (canvas.height - 100) + 80,
-                    vx: (Math.random() - 0.5) * 4,
-                    vy: (Math.random() - 0.5) * 4,
-                    radius: 4,
-                    color: '#60a5fa'
-                });
-            }
-            while (particleList.length > targetCount) {
-                particleList.pop();
+            // If an item is actively selected by click, drop it into this well
+            if (activeDragData) {
+                applyItemToWell(wellNum, activeDragData.type, activeDragData.id);
+                activeDragData = null;
+                clearSelectionHighlight();
             }
 
-            const speedFactor = Math.sqrt(state.T / 273.0);
-            particleList.forEach(p => {
-                const currentSpeed = Math.sqrt(p.vx * p.vx + p.vy * p.vy) || 1;
-                const ratio = (speedFactor * 3.5) / currentSpeed;
-                p.vx *= ratio;
-                p.vy *= ratio;
-            });
+            updateInspector();
         }
 
-        function animateLoop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Core Action Logic
+        function applyItemToWell(wellNum, type, id) {
+            const well = wells[wellNum];
 
-            const margin = 30;
-            const chamberWidth = canvas.width - (margin * 2);
-            const bottomY = canvas.height - 20;
+            if (type === 'solution') {
+                well.solution = id;
+            } else if (type === 'metal') {
+                well.metal = id;
+            }
 
-            const pistonMinY = 60;
-            const pistonMaxY = bottomY - 30;
-            const usableHeight = pistonMaxY - pistonMinY;
-            const pistonHeightPercent = state.V / 100.0;
-            const currentPistonY = pistonMaxY - (usableHeight * pistonHeightPercent);
-
-            // 실린더 챔버 그리기
-            ctx.strokeStyle = '#334155';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(margin, pistonMinY - 10);
-            ctx.lineTo(margin, bottomY);
-            ctx.lineTo(canvas.width - margin, bottomY);
-            ctx.lineTo(canvas.width - margin, pistonMinY - 10);
-            ctx.stroke();
-
-            // 피스톤 그리기
-            ctx.fillStyle = '#475569';
-            ctx.fillRect(margin + 2, currentPistonY, chamberWidth - 4, 16);
-            
-            // 피스톤 실린더 구동축
-            ctx.fillStyle = '#64748b';
-            ctx.fillRect(canvas.width / 2 - 10, pistonMinY - 20, 20, currentPistonY - (pistonMinY - 20));
-
-            // 기체 입자 렌더링
-            particleList.forEach(p => {
-                p.x += p.vx;
-                p.y += p.vy;
-
-                if (p.x - p.radius < margin + 4) {
-                    p.x = margin + 4 + p.radius;
-                    p.vx *= -1;
-                } else if (p.x + p.radius > canvas.width - margin - 4) {
-                    p.x = canvas.width - margin - 4 - p.radius;
-                    p.vx *= -1;
-                }
-
-                if (p.y + p.radius > bottomY - 4) {
-                    p.y = bottomY - 4 - p.radius;
-                    p.vy *= -1;
-                }
-                
-                const ceilingY = currentPistonY + 16;
-                if (p.y - p.radius < ceilingY) {
-                    p.y = ceilingY + p.radius;
-                    p.vy *= -1;
-                }
-
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fillStyle = p.color;
-                ctx.shadowBlur = 8;
-                ctx.shadowColor = p.color;
-                ctx.fill();
-                ctx.shadowBlur = 0; 
-            });
-
-            animationFrameId = requestAnimationFrame(animateLoop);
+            // Evaluate & start timer
+            evaluateAndStartReaction(wellNum);
+            renderWell(wellNum);
+            selectWell(wellNum);
         }
 
-        // 토스트 피드백 알림 서비스
-        function showToastNotification(message) {
-            const toast = document.createElement('div');
-            toast.className = "fixed bottom-5 right-5 bg-emerald-600 text-white font-bold text-xs px-5 py-3 rounded-xl border border-emerald-500 shadow-2xl z-50 transition-all duration-300 transform translate-y-10 opacity-0 flex items-center gap-2";
-            toast.innerHTML = `<i class="fa-solid fa-circle-check text-base"></i> <span>${message}</span>`;
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.classList.remove('translate-y-10', 'opacity-0');
-            }, 50);
+        // Chemical Reaction Evaluator & 30-Second Timer Engine
+        function evaluateAndStartReaction(wellNum) {
+            const well = wells[wellNum];
 
-            setTimeout(() => {
-                toast.classList.add('translate-y-10', 'opacity-0');
-                setTimeout(() => { toast.remove(); }, 300);
-            }, 3000);
-        }
+            // Clear previous timer if exists
+            if (well.timer) {
+                clearInterval(well.timer);
+                well.timer = null;
+            }
 
-        // 대시보드 리셋용 모달 핸들러
-        function openConfirmModal() {
-            document.getElementById('customConfirmModal').classList.remove('hidden');
-        }
+            well.progress = 0;
 
-        function closeConfirmModal() {
-            document.getElementById('customConfirmModal').classList.add('hidden');
-        }
-
-        // 원격 API 통신: 학급 전송 이력 영구 정화 (action=clear)
-        function confirmClearClassData() {
-            closeConfirmModal();
-            if (SCRIPT_URL.includes("여기에")) {
-                showToastNotification("⚠️ 구글 웹앱 URL이 구성되지 않아 로컬 조치 불가합니다.");
+            if (!well.solution || !well.metal) {
+                well.state = 'waiting';
                 return;
             }
 
-            showLoading("데이터 소거 진행 중...");
+            const metalKey = well.metal; // solid metal: 'zn', 'cu', 'ag'
+            const solutionKey = well.solution; // solution metal ion
+            
+            let solutionIonKey = '';
+            if (solutionKey === 'znso4') solutionIonKey = 'zn';
+            else if (solutionKey === 'cuso4') solutionIonKey = 'cu';
+            else if (solutionKey === 'agno3') solutionIonKey = 'ag';
 
-            fetch(`${SCRIPT_URL}?action=clear`)
-                .then(res => res.json())
-                .then(res => {
-                    hideLoading();
-                    if (res && res.success) {
-                        localStorage.setItem("SUBMIT_COUNT", "0");
-                        state.submitCount = 0;
-                        document.getElementById('localSubmitCount').innerText = "0";
-                        fetchTeacherData();
-                        showToastNotification("구글 스프레드시트 기록이 안전하게 완전 초기화되었습니다.");
+            const metalPower = reactivityRank[metalKey];
+            const ionPower = reactivityRank[solutionIonKey];
+
+            if (metalPower > ionPower) {
+                well.state = 'reacting';
+                
+                // Start 30-second progress timer (updates every 200ms)
+                const interval = 200;
+                const increment = interval / (TOTAL_REACTION_TIME * 1000);
+
+                well.timer = setInterval(() => {
+                    well.progress += increment;
+                    if (well.progress >= 1) {
+                        well.progress = 1;
+                        clearInterval(well.timer);
+                        well.timer = null;
                     }
-                })
-                .catch(err => {
-                    hideLoading();
-                    showToastNotification("⚠️ 데이터 초기화 실패");
-                    console.error(err);
-                });
+                    renderWell(wellNum);
+                    if (selectedWellId === wellNum) {
+                        updateInspector();
+                    }
+                }, interval);
+
+            } else {
+                well.state = 'no_reaction';
+            }
         }
 
-        function renderTeacherDashboard(db) {
-            const tbody = document.getElementById('teacherTableBody');
-            
-            if (SCRIPT_URL.includes("여기에")) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="8" class="px-6 py-12 text-center text-slate-500 text-sm">
-                            <i class="fa-solid fa-link-slash text-2xl mb-2 text-rose-500 block"></i>
-                            구글 Apps Script URL을 HTML 최상단에 바인딩해 주세요!<br>
-                            <span class="text-xs text-slate-600">index.html 파일의 630번째 줄 부근 [SCRIPT_URL] 값 대치 필수</span>
-                        </td>
-                    </tr>
-                `;
-                return;
+        // Helper to interpolate RGB colors for smooth fluid color changes
+        function interpolateColor(color1, color2, factor) {
+            const result = color1.slice();
+            for (let i = 0; i < 4; i++) {
+                result[i] = Math.round(result[i] + factor * (color2[i] - result[i]));
             }
-
-            if (!db || db.length === 0) {
-                document.getElementById('stat-activeStudents').innerText = "0";
-                document.getElementById('stat-avgSubmissions').innerText = "0.0";
-                document.getElementById('stat-inactiveStudents').innerText = "24";
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="8" class="px-6 py-12 text-center text-slate-500 text-sm">
-                            <i class="fa-solid fa-folder-open text-2xl mb-2 block text-slate-600"></i>
-                            현재 실시간 제출된 학급 실험 기록이 시트에 존재하지 않습니다.
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-
-            // 실시간 통계 요약
-            const uniqueStudents = [...new Set(db.map(item => item.studentId))];
-            const activeCount = uniqueStudents.length;
-            const inactiveCount = Math.max(0, 24 - activeCount);
-            const totalSubmissions = db.length;
-            const avgSubs = activeCount > 0 ? (totalSubmissions / activeCount).toFixed(1) : "0.0";
-
-            document.getElementById('stat-activeStudents').innerText = activeCount;
-            document.getElementById('stat-avgSubmissions').innerText = avgSubs;
-            document.getElementById('stat-inactiveStudents').innerText = inactiveCount;
-
-            // HTML 테이블 구성
-            let htmlString = "";
-            db.forEach((row, index) => {
-                htmlString += `
-                    <tr class="hover:bg-slate-800/40 transition-colors border-b border-slate-800/60">
-                        <td class="px-6 py-3.5 text-slate-500 font-medium">${index + 1}</td>
-                        <td class="px-6 py-3.5 font-bold text-white tracking-wide">
-                            <span class="inline-flex items-center gap-1.5">
-                                <i class="fa-solid fa-id-card text-slate-500 text-xs"></i>
-                                ${row.studentId}
-                            </span>
-                        </td>
-                        <td class="px-6 py-3.5 text-center">
-                            <span class="bg-blue-950 text-blue-400 border border-blue-900 px-2 py-0.5 rounded-full text-[10px] font-bold">
-                                ${row.round}회차 제출
-                            </span>
-                        </td>
-                        <td class="px-6 py-3.5 text-blue-400 font-semibold">${row.P.toFixed(1)} atm</td>
-                        <td class="px-6 py-3.5 text-purple-400 font-semibold">${row.V.toFixed(1)} L</td>
-                        <td class="px-6 py-3.5 text-yellow-400 font-semibold">${row.n.toFixed(1)} mol</td>
-                        <td class="px-6 py-3.5 text-red-400 font-semibold">${row.T.toFixed(1)} K</td>
-                        <td class="px-6 py-3.5 text-center font-black text-emerald-400 bg-slate-950/40">${row.ratio.toFixed(3)}</td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = htmlString;
+            return `rgba(${result[0]}, ${result[1]}, ${result[2]}, ${result[3] / 100})`;
         }
 
-        function downloadCSV() {
-            if (activeClassData.length === 0) {
-                showToastNotification("백업할 학급 데이터가 존재하지 않습니다.");
+        // Render function for single well UI & info label
+        function renderWell(wellNum) {
+            const well = wells[wellNum];
+            const contentEl = document.getElementById(`well-content-${wellNum}`);
+            const infoEl = document.getElementById(`well-info-${wellNum}`);
+
+            contentEl.innerHTML = '';
+            infoEl.innerHTML = '';
+
+            // Update info tag under well
+            if (well.solution) {
+                const solTag = document.createElement('span');
+                solTag.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full border shadow-sm transition-all';
+                
+                if (well.solution === 'cuso4') {
+                    solTag.className += ' bg-blue-50 text-blue-700 border-blue-200';
+                } else if (well.solution === 'agno3') {
+                    solTag.className += ' bg-slate-100 text-slate-700 border-slate-300';
+                } else {
+                    solTag.className += ' bg-emerald-50 text-emerald-800 border-emerald-200';
+                }
+
+                solTag.innerText = solutionsData[well.solution].shortName;
+                infoEl.appendChild(solTag);
+
+                if (well.metal) {
+                    const metalTag = document.createElement('span');
+                    metalTag.className = 'text-[10px] font-semibold text-slate-600 bg-white/80 px-1.5 py-0.5 rounded-md border border-slate-200 mt-1 shadow-xs';
+                    metalTag.innerText = `+ ${metalsData[well.metal].name}`;
+                    infoEl.appendChild(metalTag);
+                }
+            } else if (well.metal) {
+                const metalOnlyTag = document.createElement('span');
+                metalOnlyTag.className = 'text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200';
+                metalOnlyTag.innerText = `${metalsData[well.metal].name} 투입됨`;
+                infoEl.appendChild(metalOnlyTag);
+            } else {
+                infoEl.innerHTML = `<span class="text-[11px] font-medium text-slate-400 select-none">빈 홈</span>`;
+            }
+
+            if (!well.solution && !well.metal) {
+                contentEl.innerHTML = `<span class="text-xs font-medium text-slate-400 select-none">비어있음</span>`;
                 return;
             }
 
-            // UTF-8 BOM 인코딩 헤더 추가 (한글 깨짐 현상 완벽 조치)
-            let csvContent = "\uFEFF";
-            csvContent += "순번,학번,차시,압력(P),부피(V),기체의 양(n),온도(T),물리량의분수비(PV/nT)\r\n";
+            // Liquid background container
+            const liquidEl = document.createElement('div');
+            liquidEl.className = 'absolute inset-0 rounded-full liquid-layer flex items-center justify-center';
 
-            activeClassData.forEach((row, index) => {
-                csvContent += `${index + 1},${row.studentId},${row.round},${row.P},${row.V},${row.n},${row.T},${row.ratio.toFixed(3)}\r\n`;
-            });
+            // Base solution color transitions during 30s
+            if (well.solution) {
+                const p = well.progress; // 0.0 to 1.0
 
-            // Blob 파일 트리거 가상 생성
-            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-            const link = document.createElement("a");
-            const url = URL.createObjectURL(blob);
+                if (well.solution === 'cuso4') {
+                    if (well.state === 'reacting' && well.metal === 'zn') {
+                        // CuSO4 + Zn -> Solution turns lighter/clear gradually
+                        const c1 = [59, 130, 246, 45];   // Sky blue
+                        const c2 = [191, 219, 254, 15];  // Clear faint blue
+                        liquidEl.style.backgroundColor = interpolateColor(c1, c2, p);
+                    } else {
+                        liquidEl.style.backgroundColor = 'rgba(59, 130, 246, 0.45)';
+                    }
+                } else if (well.solution === 'agno3') {
+                    if (well.state === 'reacting' && well.metal === 'cu') {
+                        // AgNO3 + Cu -> Cu2+ dissolves, turning solution DEEP BLUE gradually!
+                        const c1 = [241, 245, 249, 40];  // Clear
+                        const c2 = [37, 99, 235, 75];    // Deep Blue
+                        liquidEl.style.backgroundColor = interpolateColor(c1, c2, p);
+                    } else {
+                        liquidEl.style.backgroundColor = 'rgba(241, 245, 249, 0.4)';
+                    }
+                } else {
+                    liquidEl.style.backgroundColor = 'rgba(241, 245, 249, 0.4)';
+                }
+            }
+
+            // Metal piece container inside well
+            if (well.metal) {
+                const metalBox = document.createElement('div');
+                metalBox.className = 'relative flex items-center justify-center';
+
+                const metalEl = document.createElement('div');
+                const mInfo = metalsData[well.metal];
+
+                metalEl.className = 'w-10 h-10 rounded-md shadow-md flex flex-col items-center justify-center font-bold text-xs relative z-10 transition-all duration-300';
+                metalEl.style.backgroundColor = mInfo.color;
+                metalEl.style.color = mInfo.textColor;
+                metalEl.innerText = mInfo.symbol;
+
+                // Gradual Precipitate & Surface Reaction
+                if (well.state === 'reacting') {
+                    metalBox.classList.add('reacting-metal-box');
+
+                    const p = well.progress; // 0.0 to 1.0
+
+                    // 1. AgNO3 수용액에서 은(Ag) 석출 반응 (Cu 및 Zn 공통)
+                    if (well.solution === 'agno3') {
+                        const crystalAngles = [0, 45, 90, 135, 180, 225, 270, 315];
+                        crystalAngles.forEach((angle, idx) => {
+                            const crystal = document.createElement('div');
+                            crystal.className = 'silver-crystal';
+                            
+                            const maxW = 8 + (idx % 3) * 3;
+                            const maxH = 14 + (idx % 2) * 5;
+                            const currentW = Math.max(2, maxW * p);
+                            const currentH = Math.max(3, maxH * p);
+                            
+                            crystal.style.width = `${currentW}px`;
+                            crystal.style.height = `${currentH}px`;
+                            
+                            const rad = (angle * Math.PI) / 180;
+                            const maxDist = 19;
+                            const currentDist = 10 + (maxDist - 10) * p;
+                            const x = Math.cos(rad) * currentDist;
+                            const y = Math.sin(rad) * currentDist;
+                            
+                            crystal.style.transform = `translate(${x}px, ${y}px) rotate(${angle + 45}deg)`;
+                            crystal.style.opacity = Math.min(1, p * 1.2);
+                            crystal.setAttribute('title', '석출된 은(Ag) 결정');
+                            
+                            metalBox.appendChild(crystal);
+                        });
+                    }
+                    // 2. CuSO4 수용액 + Zn 조각 반응에서 구리(Cu) 석출
+                    else if (well.metal === 'zn' && well.solution === 'cuso4') {
+                        const copperLayer = document.createElement('div');
+                        copperLayer.className = 'absolute inset-0 rounded-md copper-coating z-20 border-2 border-amber-800';
+                        copperLayer.style.backgroundColor = 'rgba(180, 83, 9, 0.85)';
+                        copperLayer.style.opacity = p;
+                        copperLayer.setAttribute('title', '석출된 구리(Cu) 입자 코팅');
+                        metalEl.appendChild(copperLayer);
+                    }
+
+                    // Active Reaction Bubbles
+                    if (p < 1) {
+                        for (let b = 0; b < 3; b++) {
+                            const bubble = document.createElement('div');
+                            bubble.className = 'bubble';
+                            bubble.style.width = `${3 + b * 2}px`;
+                            bubble.style.height = `${3 + b * 2}px`;
+                            bubble.style.left = `${15 + b * 25}%`;
+                            bubble.style.bottom = '5%';
+                            bubble.style.animationDelay = `${b * 0.4}s`;
+                            liquidEl.appendChild(bubble);
+                        }
+                    }
+                }
+
+                metalBox.appendChild(metalEl);
+                liquidEl.appendChild(metalBox);
+            }
+
+            contentEl.appendChild(liquidEl);
+        }
+
+        function renderAllWells() {
+            for (let i = 1; i <= 6; i++) {
+                renderWell(i);
+            }
+        }
+
+        function clearWell(wellNum) {
+            const well = wells[wellNum];
+            if (well.timer) {
+                clearInterval(well.timer);
+            }
+            wells[wellNum] = { solution: null, metal: null, state: 'empty', progress: 0, timer: null };
+            renderWell(wellNum);
+            if (selectedWellId === wellNum) {
+                updateInspector();
+            }
+        }
+
+        function resetAllWells() {
+            for (let i = 1; i <= 6; i++) {
+                if (wells[i].timer) {
+                    clearInterval(wells[i].timer);
+                }
+                wells[i] = { solution: null, metal: null, state: 'empty', progress: 0, timer: null };
+            }
+            renderAllWells();
+            updateInspector();
+        }
+
+        // Update Detailed Observation Inspector Panel & 30s Timer Indicator
+        function updateInspector() {
+            document.getElementById('selected-well-num').innerText = selectedWellId;
+            const well = wells[selectedWellId];
+
+            const solText = document.getElementById('detail-solution');
+            const metalText = document.getElementById('detail-metal');
+            const obsText = document.getElementById('detail-observation');
+            const eqText = document.getElementById('detail-equation');
+            const badge = document.getElementById('reaction-badge');
             
-            const now = new Date();
-            const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
-            
-            link.setAttribute("href", url);
-            link.setAttribute("download", `이상기체_가상실험_결과_${dateStr}.csv`);
-            link.style.visibility = 'hidden';
-            
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            const progressContainer = document.getElementById('progress-container');
+            const progressBar = document.getElementById('progress-bar');
+            const timerText = document.getElementById('timer-text');
+
+            solText.innerText = well.solution ? solutionsData[well.solution].name : '없음 (0 mL)';
+            metalText.innerText = well.metal ? metalsData[well.metal].name : '없음';
+
+            if (!well.solution || !well.metal) {
+                progressContainer.classList.add('hidden');
+                badge.className = 'px-2.5 py-1 text-xs font-bold rounded-full bg-slate-200 text-slate-600';
+                badge.innerText = '대기 중';
+                obsText.innerHTML = '수용액과 금속 조각을 모두 투입해야 반응을 관찰할 수 있습니다.';
+                eqText.innerText = '반응 조건 미충족';
+                return;
+            }
+
+            const m = well.metal;
+            const s = well.solution;
+
+            if (well.state === 'no_reaction') {
+                progressContainer.classList.add('hidden');
+                badge.className = 'px-2.5 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-700 border border-amber-300';
+                badge.innerText = '반응 없음';
+                
+                const mName = metalsData[m].name;
+                obsText.innerHTML = `<b class="text-amber-700">${mName}</b>의 이온화 경향이 수용액 속 금속 이온보다 작거나 같아 <b>아무런 화학 반응이 일어나지 않습니다.</b> (은/구리 석출 안됨)`;
+                eqText.innerText = `${metalsData[m].symbol} + ${solutionsData[s].ion} → 반응 없음 (No Reaction)`;
+            } 
+            else if (well.state === 'reacting') {
+                const elapsedSec = Math.floor(well.progress * TOTAL_REACTION_TIME);
+                const percent = Math.floor(well.progress * 100);
+
+                progressContainer.classList.remove('hidden');
+                progressBar.style.width = `${percent}%`;
+                timerText.innerText = `${elapsedSec}s / 30s`;
+
+                if (well.progress < 1) {
+                    badge.className = 'px-2.5 py-1 text-xs font-bold rounded-full bg-blue-100 text-blue-700 border border-blue-300 animate-pulse';
+                    badge.innerText = `반응 진행 중 (${percent}%)`;
+                } else {
+                    badge.className = 'px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300';
+                    badge.innerText = '반응 완료 (30s)';
+                }
+
+                if (m === 'zn' && s === 'cuso4') {
+                    obsText.innerHTML = `
+                        1) 아연(Zn)이 전자를 잃고 <b>Zn²⁺로 산화</b>되어 수용액으로 녹아 들어갑니다.<br>
+                        2) 구리 이온(Cu²⁺)이 전자를 얻어 <b>붉은색 구리(Cu) 입자로 환원</b>되어 아연 표면에 30초 동안 점점 석출 코팅됩니다.<br>
+                        3) Cu²⁺ 농도가 감소하여 <b>푸른색 수용액이 서서히 옅은 색으로 변화</b>합니다. (현재 진행률: ${percent}%)
+                    `;
+                    eqText.innerHTML = `산화: Zn(s) → Zn²⁺(aq) + 2e⁻<br>환원: Cu²⁺(aq) + 2e⁻ → Cu(s)<br>알짜 이온 방정식: Zn(s) + Cu²⁺(aq) → Zn²⁺(aq) + Cu(s)`;
+                }
+                else if (m === 'zn' && s === 'agno3') {
+                    obsText.innerHTML = `
+                        1) 아연(Zn)이 <b>Zn²⁺로 산화</b>되어 녹아 들어갑니다.<br>
+                        2) 은 이온(Ag⁺)이 전자를 얻어 <b>★금속 조각 둘레에 반짝이는 은백색 은(Ag) 결정이 30초에 걸쳐 방사형으로 커지며 석출★</b>됩니다.<br>
+                        3) 새로 생성된 Zn²⁺ 이온은 무색이므로 수용액은 <b>무색을 유지</b>합니다. (현재 진행률: ${percent}%)
+                    `;
+                    eqText.innerHTML = `산화: Zn(s) → Zn²⁺(aq) + 2e⁻<br>환원: 2Ag⁺(aq) + 2e⁻ → 2Ag(s) (은 결정 석출)<br>알짜 이온 방정식: Zn(s) + 2Ag⁺(aq) → Zn²⁺(aq) + 2Ag(s)`;
+                }
+                else if (m === 'cu' && s === 'agno3') {
+                    obsText.innerHTML = `
+                        1) 구리(Cu)가 전자를 잃고 <b>Cu²⁺ 이온으로 산화</b>되어 녹아 나옵니다.<br>
+                        2) <b>★구리 이온(Cu²⁺)이 수용액에 축적되면서 30초 동안 용액이 서서히 푸른색으로 변화★</b>합니다.<br>
+                        3) <b>★구리 조각 둘레에 반짝이는 은백색 은(Ag) 결정이 30초에 걸쳐 방사형으로 점점 커지며 석출★</b>됩니다. (현재 진행률: ${percent}%)
+                    `;
+                    eqText.innerHTML = `산화: Cu(s) → Cu²⁺(aq) + 2e⁻ (푸른색 이온 생성!)<br>환원: 2Ag⁺(aq) + 2e⁻ → 2Ag(s) (은 결정 석출)<br>알짜 이온 방정식: Cu(s) + 2Ag⁺(aq) → Cu²⁺(aq) + 2Ag(s)`;
+                }
+            }
         }
     </script>
 </body>
